@@ -211,7 +211,17 @@ vjs.plugin('vastClient', function VASTPlugin(options) {
   }
 
   function getVastResponse(callback) {
-    vast.getVASTResponse(settings.adTagUrl ? settings.adTagUrl() : settings.adTagXML, callback);
+    vast.getVASTResponse(settings.adTagUrl ? settings.adTagUrl() : settings.adTagXML, function(error, response) {
+      if (!error) {
+        player.trigger({
+          type: "vast.adDataLoaded",
+          response: response
+        });
+      }
+      if (callback) {
+        callback.apply(this, arguments);
+      }
+    });
   }
 
   function playAd(vastResponse, callback) {
