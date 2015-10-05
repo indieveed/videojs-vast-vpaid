@@ -126,6 +126,23 @@ dom.onReady(function() {
               player.off('pause', showResumeBtn);
             });
           });
+
+          player.on('vast.adDataLoaded', function(response) {
+            
+            if (response && response.response && response.response.ads 
+                && response.response.ads[0].inLine && response.response.ads[0].inLine.extensions 
+                && response.response.ads[0].inLine.extensions.extension
+                && response.response.ads[0].inLine.extensions.extension.length) {
+              
+              var skipExtension = response.response.ads[0].inLine.extensions.extension.filter(function(el){return el["@type"] == "skipTime2"});
+              if (skipExtension.length) {
+                var skipTime = skipExtension[0].keyValue.split(":");
+                response.response.skipoffset = (skipTime[0] * 60 + skipTime[1]) * 1000;
+                
+              }
+            }
+          });
+
         }
       });
     }
