@@ -128,19 +128,62 @@ dom.onReady(function() {
           });
 
           player.on('vast.adDataLoaded', function(response) {
-            
+
             if (response && response.response && response.response.ads 
                 && response.response.ads[0].inLine && response.response.ads[0].inLine.extensions 
                 && response.response.ads[0].inLine.extensions.extension
                 && response.response.ads[0].inLine.extensions.extension.length) {
               
-              var skipExtension = response.response.ads[0].inLine.extensions.extension.filter(function(el){return el["@type"] == "skipTime2"});
+              var skipExtension = response.response.ads[0].inLine.extensions.extension.filter(function(el){
+                return el["@type"] == "skipTime2";
+              });
+
               if (skipExtension.length) {
                 var skipTime = skipExtension[0].keyValue.split(":");
                 response.response.skipoffset = (skipTime[0] * 60 + skipTime[1]) * 1000;
-                
               }
+
+              var customTrackingExtension = response.response.ads[0].inLine.extensions.extension.filter(function(el){
+                return el["@type"] == "CustomTracking";
+              });
+
+              if (customTrackingExtension.length) {
+                var skipTrackings = [];
+                customTrackingExtension.forEach(function(el) {
+                  if (el.tracking.length > 1) { // if many trackings, it is an array
+
+                    el.tracking.forEach(function(tracking) {
+                      
+                      if (tracking["@event"] == "onSkipAd") {
+                        skipTrackings.push({
+                          "name": "skip",
+                          "uri": tracking["keyValue"]
+                        });
+                      }
+
+                    });
+                    
+                  } else {
+
+                    if (el.tracking["@event"] == "onSkipAd") {
+                      skipTrackings.push({
+                        "name": "skip",
+                        "uri": el.tracking["keyValue"]
+                      });
+                    }
+
+                  }
+
+                });
+
+                if (skipTrackings.length) {
+                  response.response.trackingEvents["skip"] = response.response.trackingEvents["skip"] || [];
+                  response.response.trackingEvents["skip"] = response.response.trackingEvents["skip"].concat(skipTrackings);
+                }
+              }
+
             }
+
           });
 
         }
